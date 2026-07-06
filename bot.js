@@ -5,7 +5,7 @@ const axios = require("axios");
 
 const { getCryptoPulse } = require("./apis/coingecko");
 const { getStockPulse } = require("./apis/finnhub");
-const { getMarketMovers } = require("./apis/alphavantage");
+const { getMarketMovers, getForexPulse, getCommoditiesPulse } = require("./apis/alphavantage");
 const { getTopNews } = require("./apis/news");
 const { getFearGreedIndex } = require("./apis/feargreed");
 const { generateMarketAnalysis } = require("./ai");
@@ -16,26 +16,30 @@ const HISTORY_PATH = path.join(__dirname, "history.json");
 async function run() {
   console.log("MarketPulseAI: fetching data...");
 
-  const [crypto, stocks, movers, news, fearGreed] = await Promise.all([
+  const [crypto, stocks, movers, forex, commodities, news, fearGreed] = await Promise.all([
     getCryptoPulse(),
     getStockPulse(),
     getMarketMovers(),
+    getForexPulse(),
+    getCommoditiesPulse(),
     getTopNews(),
     getFearGreedIndex()
   ]);
 
   logStatus("CoinGecko", crypto);
   logStatus("Finnhub", stocks);
-  logStatus("AlphaVantage", movers);
+  logStatus("AlphaVantage (Movers)", movers);
+  logStatus("AlphaVantage (Forex)", forex);
+  logStatus("AlphaVantage (Commodities)", commodities);
   logStatus("NewsAPI", news);
   logStatus("Fear&Greed", fearGreed);
 
   console.log("MarketPulseAI: running AI analysis...");
-  const aiSummary = await generateMarketAnalysis({ crypto, stocks, movers, news, fearGreed });
+  const aiSummary = await generateMarketAnalysis({ crypto, stocks, movers, forex, commodities, news, fearGreed });
   logStatus("AI (OpenRouter)", aiSummary);
 
   const date = new Date().toISOString().slice(0, 10);
-  const message = formatPulseMessage({ date, crypto, stocks, movers, news, fearGreed, aiSummary });
+  const message = formatPulseMessage({ date, crypto, stocks, movers, forex, commodities, news, fearGreed, aiSummary });
 
   await sendToTelegram(message);
   appendHistory({ date, aiSummary: aiSummary.ok ? aiSummary.summary : null });
