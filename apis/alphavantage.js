@@ -2,24 +2,37 @@ const axios = require("axios");
 
 const BASE_URL = "https://www.alphavantage.co/query";
 
-// Major forex pairs to track
+// Forex pairs to track
 const FOREX_PAIRS = [
-  { from: "EUR", to: "USD", label: "EUR/USD" },
-  { from: "GBP", to: "USD", label: "GBP/USD" },
-  { from: "USD", to: "JPY", label: "USD/JPY" },
-  { from: "USD", to: "INR", label: "USD/INR" }
+  { from: "USD", to: "INR", label: "USD/INR" },
+  { from: "EUR", to: "USD", label: "EUR/USD" }
 ];
 
-// Commodities Alpha Vantage exposes as dedicated endpoints
-const COMMODITIES = [
-  { fn: "WTI", label: "Crude Oil (WTI)", unit: "$/barrel" },
-  { fn: "BRENT", label: "Crude Oil (Brent)", unit: "$/barrel" },
-  { fn: "NATURAL_GAS", label: "Natural Gas", unit: "$/MMBtu" },
-  { fn: "COPPER", label: "Copper", unit: "$/lb" },
-  { fn: "ALUMINUM", label: "Aluminum", unit: "$/ton" },
-  { fn: "WHEAT", label: "Wheat", unit: "$/bushel" },
-  { fn: "CORN", label: "Corn", unit: "$/bushel" }
+// Metals priced via the currency-exchange trick (XAU/XAG are valid
+// "from_currency" codes on Alpha Vantage, quoted as $ per troy ounce).
+const METALS = [
+  { from: "XAU", to: "USD", label: "Gold", unit: "$/oz" },
+  { from: "XAG", to: "USD", label: "Silver", unit: "$/oz" }
 ];
+
+async function fetchExchangeRate(apiKey, from, to) {
+  const { data } = await axios.get(BASE_URL, {
+    params: {
+      function: "CURRENCY_EXCHANGE_RATE",
+      from_currency: from,
+      to_currency: to,
+      apikey: apiKey
+    },
+    timeout: 10000
+  });
+
+  if (data.Note || data.Information) {
+    throw new Error(data.Note || data.Information);
+  }
+
+  const rate = data["Realtime Currency Exchange Rate"];
+  return rate ? Number(rate["5. Exchange Rate"]) : null;
+}
 
 /**
  * Fetches top US stock market gainers/losers/most-active.
@@ -65,7 +78,7 @@ async function getMarketMovers() {
 }
 
 /**
- * Fetches a handful of major forex pairs using CURRENCY_EXCHANGE_RATE.
+ * Fetches USD/INR and EUR/USD using CURRENCY_EXCHANGE_RATE.
  * Requires ALPHAVANTAGE_API_KEY.
  */
 async function getForexPulse() {
@@ -75,44 +88,20 @@ async function getForexPulse() {
   }
 
   try {
-    const results = [];
+    const pairs = [];
     for (const pair of FOREX_PAIRS) {
-      const { data } = await axios.get(BASE_URL, {
-        params: {
-          function: "CURRENCY_EXCHANGE_RATE",
-          from_currency: pair.from,
-          to_currency: pair.to,
-          apikey: apiKey
-        },
-        timeout: 10000
-      });
-
-      if (data.Note || data.Information) {
-        return { ok: false, error: data.Note || data.Information };
-      }
-
-      const rate = data["Realtime Currency Exchange Rate"];
-      if (!rate) {
-        results.push({ label: pair.label, rate: null, error: "no data" });
-        continue;
-      }
-
-      results.push({
-        label: pair.label,
-        rate: rate["5. Exchange Rate"],
-        lastRefreshed: rate["6. Last Refreshed"]
-      });
+      const rate = await fetchExchangeRate(apiKey, pair.from, pair.to);
+      pairs.push({ label: pair.label, rate });
     }
-
-    return { ok: true, pairs: results };
+    return { ok: true, pairs };
   } catch (err) {
     return { ok: false, error: err.message };
   }
 }
 
 /**
- * Fetches key commodity prices (oil, gas, metals, agriculture) using
- * Alpha Vantage's dedicated commodities endpoints.
+ * Fetches Gold, Silver (via currency-exchange trick) and Crude Oil (WTI,
+ * via Alpha Vantage's dedicated commodity endpoint).
  * Requires ALPHAVANTAGE_API_KEY.
  */
 async function getCommoditiesPulse() {
@@ -122,31 +111,34 @@ async function getCommoditiesPulse() {
   }
 
   try {
-    const results = [];
-    for (const commodity of COMMODITIES) {
-      const { data } = await axios.get(BASE_URL, {
-        params: {
-          function: commodity.fn,
-          interval: "monthly",
-          apikey: apiKey
-        },
-        timeout: 10000
-      });
+    const gold = await fetchExchangeRate(apiKey, METALS[0].from, METALS[0].to);
+    const silver = await fetchExchangeRate(apiKey, METALS[1].from, METALS[1].to);
 
-      if (data.Note || data.Information) {
-        return { ok: false, error: data.Note || data.Information };
-      }
+    const { data } = await axios.get(BASE_URL, {
+      params: {
+        function: "WTI",
+        interval: "monthly",
+        apikey: apiKey
+      },
+      timeout: 10000
+    });
 
-      const latest = Array.isArray(data.data) ? data.data[0] : null;
-      results.push({
-        label: commodity.label,
-        unit: commodity.unit,
-        value: latest?.value ?? null,
-        date: latest?.date ?? null
-      });
+    if (data.Note || data.Information) {
+      throw new Error(data.Note || data.Information);
     }
 
-    return { ok: true, commodities: results };
+    const latest = Array.isArray(data.data) ? data.data[0] : null;
+
+    return {
+      ok: true,
+      gold: { label: "Gold", unit: METALS[0].unit, value: gold },
+      silver: { label: "Silver", unit: METALS[1].unit, value: silver },
+      crudeOil: {
+        label: "Crude Oil (WTI)",
+        unit: "$/barrel",
+        value: latest?.value ? Number(latest.value) : null
+      }
+    };
   } catch (err) {
     return { ok: false, error: err.message };
   }
