@@ -1,7 +1,7 @@
 {
   "name": "marketpulseai",
-  "version": "1.0.0",
-  "description": "Daily AI-generated market pulse (crypto + stocks + news + sentiment) delivered to Telegram",
+  "version": "2.0.0",
+  "description": "3x-daily AI-generated market brief (US + Indian indices, crypto, forex, commodities, movers, news, AI summary, risks, economic calendar) delivered to Telegram",
   "main": "bot.js",
   "type": "commonjs",
   "scripts": {
