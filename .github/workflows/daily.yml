@@ -1,10 +1,17 @@
-name: Daily Market Pulse
+name: Market Pulse Bot
 
 on:
   schedule:
-    # Runs 07:30 UTC daily = 1:00 PM IST
-    - cron: "30 7 * * *"
-  workflow_dispatch: {}
+    # Times are UTC. Assumes IST (Asia/Kolkata, UTC+5:30) for the Indian-market audience:
+    - cron: "30 2 * * *"  # 08:00 IST — Daily Market Brief
+    - cron: "30 7 * * *"  # 13:00 IST — Midday Update
+    - cron: "30 14 * * *" # 20:00 IST — Market Close Summary
+  workflow_dispatch:
+    inputs:
+      brief_type:
+        description: "Brief type label to use for a manual run"
+        required: false
+        default: "🌍 Market Brief"
 
 permissions:
   contents: write
@@ -24,8 +31,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Determine brief type
+        id: brief
+        run: |
+          case "${{ github.event.schedule }}" in
+            "30 2 * * *") echo "type=🌅 Daily Market Brief" >> "$GITHUB_OUTPUT" ;;
+            "30 7 * * *") echo "type=🌍 Midday Update" >> "$GITHUB_OUTPUT" ;;
+            "30 14 * * *") echo "type=🌙 Market Close Summary" >> "$GITHUB_OUTPUT" ;;
+            *) echo "type=${{ github.event.inputs.brief_type || '🌍 Market Brief' }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - name: Run MarketPulseAI
         env:
+          BRIEF_TYPE: ${{ steps.brief.outputs.type }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
