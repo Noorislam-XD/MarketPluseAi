@@ -4,45 +4,66 @@ const path = require("path");
 const axios = require("axios");
 
 const { getCryptoPulse } = require("./apis/coingecko");
-const { getStockPulse } = require("./apis/finnhub");
+const { getIndexPulse } = require("./apis/indices");
 const { getMarketMovers, getForexPulse, getCommoditiesPulse } = require("./apis/alphavantage");
 const { getTopNews } = require("./apis/news");
-const { getFearGreedIndex } = require("./apis/feargreed");
+const { getEconomicCalendar } = require("./apis/calendar");
 const { generateMarketAnalysis } = require("./ai");
 const { formatPulseMessage } = require("./formatter");
 
 const HISTORY_PATH = path.join(__dirname, "history.json");
 
 async function run() {
-  console.log("MarketPulseAI: fetching data...");
+  const briefType = process.env.BRIEF_TYPE || "🌍 Market Brief";
+  console.log(`MarketPulseAI: fetching data for "${briefType}"...`);
 
-  const [crypto, stocks, movers, forex, commodities, news, fearGreed] = await Promise.all([
+  const [crypto, indices, movers, forex, commodities, news, calendar] = await Promise.all([
     getCryptoPulse(),
-    getStockPulse(),
+    getIndexPulse(),
     getMarketMovers(),
     getForexPulse(),
     getCommoditiesPulse(),
     getTopNews(),
-    getFearGreedIndex()
+    getEconomicCalendar()
   ]);
 
   logStatus("CoinGecko", crypto);
-  logStatus("Finnhub", stocks);
+  logStatus("Indices (Yahoo)", indices);
   logStatus("AlphaVantage (Movers)", movers);
   logStatus("AlphaVantage (Forex)", forex);
   logStatus("AlphaVantage (Commodities)", commodities);
   logStatus("NewsAPI", news);
-  logStatus("Fear&Greed", fearGreed);
+  logStatus("Finnhub (Calendar)", calendar);
 
   console.log("MarketPulseAI: running AI analysis...");
-  const aiSummary = await generateMarketAnalysis({ crypto, stocks, movers, forex, commodities, news, fearGreed });
+  const aiSummary = await generateMarketAnalysis({
+    briefType,
+    crypto,
+    indices,
+    movers,
+    forex,
+    commodities,
+    news,
+    calendar
+  });
   logStatus("AI (OpenRouter)", aiSummary);
 
   const date = new Date().toISOString().slice(0, 10);
-  const message = formatPulseMessage({ date, crypto, stocks, movers, forex, commodities, news, fearGreed, aiSummary });
+  const message = formatPulseMessage({
+    briefType,
+    date,
+    indices,
+    crypto,
+    forex,
+    commodities,
+    movers,
+    news,
+    aiSummary,
+    calendar
+  });
 
   await sendToTelegram(message);
-  appendHistory({ date, aiSummary: aiSummary.ok ? aiSummary.summary : null });
+  appendHistory({ date, briefType, aiSummary: aiSummary.ok ? aiSummary.summary : null });
 
   console.log("MarketPulseAI: done.");
 }
