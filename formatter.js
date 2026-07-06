@@ -1,7 +1,7 @@
 /**
  * Formats aggregated data + AI summary into a Telegram MarkdownV2-safe message.
  */
-function formatPulseMessage({ date, crypto, stocks, movers, news, fearGreed, aiSummary }) {
+function formatPulseMessage({ date, crypto, stocks, movers, forex, commodities, news, fearGreed, aiSummary }) {
   const lines = [];
 
   lines.push(`*📊 MarketPulseAI — ${escape(date)}*`);
@@ -50,6 +50,28 @@ function formatPulseMessage({ date, crypto, stocks, movers, news, fearGreed, aiS
     });
   } else {
     lines.push(escape(`unavailable (${stocks?.error || "unknown error"})`));
+  }
+  lines.push("");
+
+  // Forex section
+  lines.push("*💱 Forex*");
+  if (forex?.ok) {
+    forex.pairs.forEach((p) => {
+      lines.push(`${escape(p.label)}: ${p.rate ? fmt(p.rate) : "N/A"}`);
+    });
+  } else {
+    lines.push(escape(`unavailable (${forex?.error || "unknown error"})`));
+  }
+  lines.push("");
+
+  // Commodities section
+  lines.push("*🛢️ Commodities*");
+  if (commodities?.ok) {
+    commodities.commodities.forEach((c) => {
+      lines.push(`${escape(c.label)}: ${c.value ? fmt(c.value) : "N/A"} ${escape(c.unit)}`);
+    });
+  } else {
+    lines.push(escape(`unavailable (${commodities?.error || "unknown error"})`));
   }
   lines.push("");
 
