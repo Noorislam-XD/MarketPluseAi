@@ -1,0 +1,17 @@
+{
+  "name": "marketpulseai",
+  "version": "1.0.0",
+  "description": "Daily AI-generated market pulse (crypto + stocks + news + sentiment) delivered to Telegram",
+  "main": "bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
