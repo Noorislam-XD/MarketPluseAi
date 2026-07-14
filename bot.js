@@ -82,7 +82,7 @@ async function sendToTelegram(message) {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text: message,
-      parse_mode: "Markdown",
+      parse_mode: "HTML",
       disable_web_page_preview: true
     });
     console.log("Sent to Telegram.");

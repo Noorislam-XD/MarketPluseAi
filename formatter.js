@@ -1,5 +1,5 @@
 /**
- * Formats aggregated data + AI summary into a Telegram Markdown message,
+ * Formats aggregated data + AI summary into a Telegram HTML message,
  * matching the fixed section order of the Market Brief template.
  */
 function formatPulseMessage({
@@ -16,11 +16,11 @@ function formatPulseMessage({
 }) {
   const lines = [];
 
-  lines.push(`*${escape(briefType || "🌍 Market Brief")} — ${escape(date)}*`);
+  lines.push(`<b>${escape(briefType || "🌍 Market Brief")} — ${escape(date)}</b>`);
   lines.push("");
 
   // US Markets
-  lines.push("*🇺🇸 US Markets*");
+  lines.push("<b>🇺🇸 US Markets</b>");
   if (indices?.ok) {
     indices.us.forEach((i) => lines.push(indexLine(i)));
   } else {
@@ -29,7 +29,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Indian Markets
-  lines.push("*🇮🇳 Indian Markets*");
+  lines.push("<b>🇮🇳 Indian Markets</b>");
   if (indices?.ok) {
     indices.india.forEach((i) => lines.push(indexLine(i)));
   } else {
@@ -38,7 +38,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Crypto
-  lines.push("*₿ Crypto*");
+  lines.push("<b>₿ Crypto</b>");
   if (crypto?.ok) {
     [crypto.btc, crypto.eth, crypto.sol, crypto.xrp].filter(Boolean).forEach((c) => {
       lines.push(`${escape(c.symbol)}: $${fmt(c.price)} (${pct(c.change24h)})`);
@@ -49,7 +49,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Forex
-  lines.push("*💵 Forex*");
+  lines.push("<b>💵 Forex</b>");
   if (forex?.ok) {
     forex.pairs.forEach((p) => {
       lines.push(`${escape(p.label)}: ${p.rate ? fmt(p.rate) : "N/A"}`);
@@ -60,7 +60,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Commodities
-  lines.push("*🥇 Commodities*");
+  lines.push("<b>🥇 Commodities</b>");
   if (commodities?.ok) {
     [commodities.gold, commodities.silver, commodities.crudeOil].filter(Boolean).forEach((c) => {
       lines.push(`${escape(c.label)}: ${c.value ? fmt(c.value) : "N/A"} ${escape(c.unit)}`);
@@ -71,16 +71,16 @@ function formatPulseMessage({
   lines.push("");
 
   // Top Movers
-  lines.push("*🔥 Top Movers*");
+  lines.push("<b>🔥 Top Movers</b>");
   if (movers?.ok) {
     if (movers.topGainers?.length) {
       lines.push(
-        `Gainers: ${movers.topGainers.map((s) => `${s.ticker} ${escape(s.changePct)}`).join(", ")}`
+        `Gainers: ${movers.topGainers.map((s) => `${escape(s.ticker)} ${escape(s.changePct)}`).join(", ")}`
       );
     }
     if (movers.topLosers?.length) {
       lines.push(
-        `Losers: ${movers.topLosers.map((s) => `${s.ticker} ${escape(s.changePct)}`).join(", ")}`
+        `Losers: ${movers.topLosers.map((s) => `${escape(s.ticker)} ${escape(s.changePct)}`).join(", ")}`
       );
     }
   } else {
@@ -89,10 +89,10 @@ function formatPulseMessage({
   lines.push("");
 
   // Top News
-  lines.push("*📰 Top News*");
+  lines.push("<b>📰 Top News</b>");
   if (news?.ok && news.headlines.length) {
     news.headlines.forEach((h) => {
-      lines.push(`• [${escape(h.title)}](${h.url})`);
+      lines.push(`• <a href="${escapeHTMLAttr(h.url)}">${escape(h.title)}</a>`);
     });
   } else {
     lines.push(escape(`unavailable (${news?.error || "unknown error"})`));
@@ -100,7 +100,7 @@ function formatPulseMessage({
   lines.push("");
 
   // AI Summary
-  lines.push("*🤖 AI Summary*");
+  lines.push("<b>🤖 AI Summary</b>");
   if (aiSummary?.ok) {
     lines.push(escape(aiSummary.summary));
   } else {
@@ -109,7 +109,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Risks Today
-  lines.push("*⚠️ Risks Today*");
+  lines.push("<b>⚠️ Risks Today</b>");
   if (aiSummary?.ok && aiSummary.risks) {
     lines.push(escape(aiSummary.risks));
   } else {
@@ -118,7 +118,7 @@ function formatPulseMessage({
   lines.push("");
 
   // Economic Calendar
-  lines.push("*📅 Economic Calendar*");
+  lines.push("<b>📅 Economic Calendar</b>");
   if (calendar?.ok && calendar.events.length) {
     calendar.events.forEach((e) => {
       lines.push(
@@ -151,9 +151,16 @@ function pct(num) {
   return `${sign}${n.toFixed(2)}%`;
 }
 
-// Escapes legacy Telegram Markdown reserved characters (parse_mode: "Markdown").
+// Escapes characters for Telegram HTML parse_mode
 function escape(str = "") {
-  return String(str).replace(/([_*`\[\]])/g, "\\$1");
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHTMLAttr(str = "") {
+  return String(str).replace(/"/g, "&quot;");
 }
 
 module.exports = { formatPulseMessage };
