@@ -13,6 +13,11 @@
       "date": "2026-08-01",
       "briefType": "🌍 Market Brief",
       "aiSummary": null
+    },
+    {
+      "date": "2026-08-01",
+      "briefType": "🌙 Market Close Summary",
+      "aiSummary": null
     }
   ]
 }
