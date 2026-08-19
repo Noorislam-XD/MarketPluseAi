@@ -278,6 +278,11 @@
       "date": "2026-08-19",
       "briefType": "🌍 Midday Update",
       "aiSummary": null
+    },
+    {
+      "date": "2026-08-19",
+      "briefType": "🌙 Market Close Summary",
+      "aiSummary": null
     }
   ]
 }
