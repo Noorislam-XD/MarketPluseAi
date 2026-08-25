@@ -358,6 +358,11 @@
       "date": "2026-08-24",
       "briefType": "🌙 Market Close Summary",
       "aiSummary": null
+    },
+    {
+      "date": "2026-08-25",
+      "briefType": "🌅 Daily Market Brief",
+      "aiSummary": null
     }
   ]
 }
