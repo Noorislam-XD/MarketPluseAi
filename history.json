@@ -7,11 +7,6 @@
     },
     {
       "date": "2026-08-01",
-      "briefType": "🌍 Market Brief",
-      "aiSummary": null
-    },
-    {
-      "date": "2026-08-01",
       "briefType": "🌙 Market Close Summary",
       "aiSummary": null
     },
@@ -448,6 +443,11 @@
     {
       "date": "2026-08-31",
       "briefType": "🌅 Daily Market Brief",
+      "aiSummary": null
+    },
+    {
+      "date": "2026-08-31",
+      "briefType": "🌍 Midday Update",
       "aiSummary": null
     }
   ]
