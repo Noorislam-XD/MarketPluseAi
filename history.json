@@ -1,11 +1,6 @@
 {
   "posts": [
     {
-      "date": "2026-08-03",
-      "briefType": "🌙 Market Close Summary",
-      "aiSummary": null
-    },
-    {
       "date": "2026-08-04",
       "briefType": "🌅 Daily Market Brief",
       "aiSummary": null
@@ -448,6 +443,11 @@
     {
       "date": "2026-09-02",
       "briefType": "🌙 Market Close Summary",
+      "aiSummary": null
+    },
+    {
+      "date": "2026-09-03",
+      "briefType": "🌅 Daily Market Brief",
       "aiSummary": null
     }
   ]
