@@ -2,11 +2,6 @@
   "posts": [
     {
       "date": "2026-10-04",
-      "briefType": "🌍 Midday Update",
-      "aiSummary": null
-    },
-    {
-      "date": "2026-10-04",
       "briefType": "🌙 Market Close Summary",
       "aiSummary": null
     },
@@ -448,6 +443,11 @@
     {
       "date": "2026-11-03",
       "briefType": "🌍 Midday Update",
+      "aiSummary": null
+    },
+    {
+      "date": "2026-11-03",
+      "briefType": "🌙 Market Close Summary",
       "aiSummary": null
     }
   ]
